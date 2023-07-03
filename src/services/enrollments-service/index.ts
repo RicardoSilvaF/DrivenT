@@ -12,18 +12,17 @@ async function getAddressFromCEP(cep: string): Promise<AddressEnrollment> {
   if (!result.data || result.data.erro) {
     throw notFoundError();
   }
-
-  const { bairro, localidade, uf, complemento, logradouro } = result.data;
-
-  const address: AddressEnrollment = {
-    bairro,
-    cidade: localidade,
-    uf,
-    complemento,
-    logradouro,
+  //. FIXME: não estamos interessados em todos os campos
+  const CEPdata = {
+    logradouro: result.data.logradouro,
+    complemento: result.data.complemento,
+    bairro: result.data.bairro,
+    cidade: result.data.localidade,
+    uf: result.data.uf,
   };
 
-  return address;
+  // FIXME: não estamos interessados em todos os campos
+  return result.data;
 }
 
 async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddressByUserIdResult> {
@@ -31,7 +30,7 @@ async function getOneWithAddressByUserId(userId: number): Promise<GetOneWithAddr
 
   if (!enrollmentWithAddress) throw notFoundError();
 
-  const [firstAddress] = enrollmentWithAddress.Address;
+  const firstAddress = enrollmentWithAddress.Address;
   const address = getFirstAddress(firstAddress);
 
   return {
