@@ -21,6 +21,27 @@ export async function getUserTickets(req: AuthenticatedRequest, res: Response) {
     }
     return res.status(httpStatus.OK).send(userTickets);
   } catch (error) {
-    return res.status(httpStatus.INTERNAL_SERVER_ERROR).send(error.message);
+    return res.sendStatus(httpStatus.NO_CONTENT);
+  }
+}
+
+export async function postTicket(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.userId;
+    const { ticketTypeId } = req.body;
+    if (!userId) {
+      return res.sendStatus(httpStatus.NOT_FOUND);
+    }
+    if (!ticketTypeId) {
+      return res.sendStatus(httpStatus.BAD_REQUEST);
+    }
+    const newTicket = await ticketService.postTicketService(userId, ticketTypeId);
+
+    return res.status(201).send(newTicket);
+  } catch (error) {
+    if (error.name === 'NotFoundError') {
+      return res.sendStatus(httpStatus.NOT_FOUND);
+    }
+    return res.sendStatus(httpStatus.INTERNAL_SERVER_ERROR);
   }
 }
