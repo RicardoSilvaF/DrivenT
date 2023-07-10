@@ -58,7 +58,6 @@ export async function getUserTicketsService(userId: number) {
 export async function postTicketService(userId: number, ticketTypeId: number) {
   const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
   if (!enrollment) {
-    console.log('ENTROU AQUI!!!');
     throw notFoundError();
   }
   return await ticketRepository.postTicketRepository(enrollment.id, ticketTypeId);
