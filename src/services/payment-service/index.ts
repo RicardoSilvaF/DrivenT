@@ -1,8 +1,21 @@
 import paymentRepository from '@/repositories/payment-repository';
 import { prisma } from '@/config';
 import { unauthorizedError, notFoundError } from '@/errors';
+import { CardData } from '@/protocols';
 
 export async function getPaymentsByIdService(ticketId: number, userId: number) {
+  await checkTicketByTicketId(ticketId);
+  await checkUserByTicketId(ticketId, userId);
+  return await paymentRepository.getPaymentsByIdRepository(ticketId);
+}
+
+export async function postPaymentsProcessService(userId: number, ticketId: number, cardData: CardData) {
+  await checkTicketByTicketId(ticketId);
+  await checkUserByTicketId(ticketId, userId);
+  return await paymentRepository.postPaymentsProcessRepository(ticketId, cardData);
+}
+
+async function checkTicketByTicketId(ticketId: number) {
   const checkTicket = await prisma.ticket.findUnique({
     where: {
       id: ticketId,
@@ -12,6 +25,9 @@ export async function getPaymentsByIdService(ticketId: number, userId: number) {
   if (!checkTicket) {
     throw notFoundError();
   }
+}
+
+async function checkUserByTicketId(ticketId: number, userId: number) {
   const checkUser = await prisma.ticket.findUnique({
     where: {
       id: ticketId,
@@ -27,11 +43,11 @@ export async function getPaymentsByIdService(ticketId: number, userId: number) {
   if (!checkUser || checkUser.Enrollment.User.id !== userId) {
     throw unauthorizedError();
   }
-  return await paymentRepository.getPaymentsByIdRepository(ticketId);
 }
 
 const paymentService = {
   getPaymentsByIdService,
+  postPaymentsProcessService,
 };
 
 export default paymentService;
