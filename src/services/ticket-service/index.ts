@@ -1,5 +1,7 @@
 import ticketRepository from '@/repositories/ticket-repository';
 import { prisma } from '@/config';
+import enrollmentRepository from '@/repositories/enrollment-repository';
+import { notFoundError } from '@/errors';
 
 export async function getTicketTypesService() {
   return await ticketRepository.getTicketTypesRepository();
@@ -53,9 +55,19 @@ export async function getUserTicketsService(userId: number) {
   };
 }
 
+export async function postTicketService(userId: number, ticketTypeId: number) {
+  const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
+  if (!enrollment) {
+    console.log('ENTROU AQUI!!!');
+    throw notFoundError();
+  }
+  return await ticketRepository.postTicketRepository(enrollment.id, ticketTypeId);
+}
+
 const ticketService = {
   getTicketTypesService,
   getUserTicketsService,
+  postTicketService,
 };
 
 export default ticketService;
