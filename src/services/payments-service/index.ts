@@ -1,4 +1,4 @@
-import paymentRepository from '@/repositories/payment-repository';
+import paymentRepository from '@/repositories/payments-repository';
 import { prisma } from '@/config';
 import { unauthorizedError, notFoundError } from '@/errors';
 import { CardData } from '@/protocols';

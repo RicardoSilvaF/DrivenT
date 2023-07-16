@@ -1,4 +1,4 @@
-import ticketRepository from '@/repositories/ticket-repository';
+import ticketRepository from '@/repositories/tickets-repository';
 import { prisma } from '@/config';
 import enrollmentRepository from '@/repositories/enrollment-repository';
 import { notFoundError } from '@/errors';
