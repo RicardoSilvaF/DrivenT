@@ -29,7 +29,7 @@ export async function getUserTicketsService(userId: number) {
     throw new Error(`User with ID ${userId} not found`);
   }
 
-  const enrollment = user.Enrollment[0];
+  const enrollment = user.Enrollment;
   if (!enrollment || enrollment.Ticket.length === 0) {
     return null;
   }
