@@ -1,45 +1,53 @@
-import { notFoundError, unauthorizedError } from '@/errors';
-import { CardPaymentParams, PaymentParams } from '@/protocols';
-import enrollmentRepository from '@/repositories/enrollment-repository';
-import paymentsRepository from '@/repositories/payments-repository';
-import ticketsRepository from '@/repositories/tickets-repository';
+import paymentRepository from '@/repositories/payments-repository';
+import { prisma } from '@/config';
+import { unauthorizedError, notFoundError } from '@/errors';
+import { CardData } from '@/protocols';
 
-async function verifyTicketAndEnrollment(ticketId: number, userId: number) {
-  const ticket = await ticketsRepository.findTickeyById(ticketId);
-  if (!ticket) throw notFoundError();
-
-  const enrollment = await enrollmentRepository.findById(ticket.enrollmentId);
-  if (!enrollment) throw notFoundError();
-
-  if (enrollment.userId !== userId) throw unauthorizedError();
+export async function getPaymentsByIdService(ticketId: number, userId: number) {
+  await checkTicketByTicketId(ticketId);
+  await checkUserByTicketId(ticketId, userId);
+  return await paymentRepository.getPaymentsByIdRepository(ticketId);
 }
 
-async function getPaymentByTicketId(userId: number, ticketId: number) {
-  await verifyTicketAndEnrollment(ticketId, userId);
-
-  const payment = await paymentsRepository.findPaymentByTicketId(ticketId);
-  if (!payment) throw notFoundError();
-
-  return payment;
+export async function postPaymentsProcessService(userId: number, ticketId: number, cardData: CardData) {
+  await checkTicketByTicketId(ticketId);
+  await checkUserByTicketId(ticketId, userId);
+  return await paymentRepository.postPaymentsProcessRepository(ticketId, cardData);
 }
 
-async function paymentProcess(ticketId: number, userId: number, cardData: CardPaymentParams) {
-  await verifyTicketAndEnrollment(ticketId, userId);
+async function checkTicketByTicketId(ticketId: number) {
+  const checkTicket = await prisma.ticket.findUnique({
+    where: {
+      id: ticketId,
+    },
+  });
 
-  const ticket = await ticketsRepository.findTickeWithTypeById(ticketId);
-
-  const paymentData: PaymentParams = {
-    ticketId,
-    value: ticket.TicketType.price,
-    cardIssuer: cardData.issuer,
-    cardLastDigits: cardData.number.toString().slice(-4),
-  };
-
-  const payment = await paymentsRepository.createPayment(ticketId, paymentData);
-
-  await ticketsRepository.ticketProcessPayment(ticketId);
-
-  return payment;
+  if (!checkTicket) {
+    throw notFoundError();
+  }
 }
 
-export default { getPaymentByTicketId, paymentProcess };
+async function checkUserByTicketId(ticketId: number, userId: number) {
+  const checkUser = await prisma.ticket.findUnique({
+    where: {
+      id: ticketId,
+    },
+    include: {
+      Enrollment: {
+        include: {
+          User: true,
+        },
+      },
+    },
+  });
+  if (!checkUser || checkUser.Enrollment.User.id !== userId) {
+    throw unauthorizedError();
+  }
+}
+
+const paymentService = {
+  getPaymentsByIdService,
+  postPaymentsProcessService,
+};
+
+export default paymentService;

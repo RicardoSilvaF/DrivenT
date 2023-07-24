@@ -13,8 +13,8 @@ import {
   authenticationRouter,
   eventsRouter,
   enrollmentsRouter,
-  ticketsRouter,
-  paymentsRouter,
+  ticketRouter,
+  paymentRouter,
   hotelsRouter,
 } from '@/routers';
 
@@ -27,8 +27,8 @@ app
   .use('/auth', authenticationRouter)
   .use('/event', eventsRouter)
   .use('/enrollments', enrollmentsRouter)
-  .use('/tickets', ticketsRouter)
-  .use('/payments', paymentsRouter)
+  .use('/tickets', ticketRouter)
+  .use('/payments', paymentRouter)
   .use('/hotels', hotelsRouter)
   .use(handleApplicationErrors);
 

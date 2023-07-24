@@ -13,12 +13,15 @@ async function getAddressFromCEP(cep: string): Promise<AddressEnrollment> {
     throw notFoundError();
   }
   //. FIXME: não estamos interessados em todos os campos
-  const CEPdata = {
-    logradouro: result.data.logradouro,
-    complemento: result.data.complemento,
-    bairro: result.data.bairro,
-    cidade: result.data.localidade,
-    uf: result.data.uf,
+
+  const { bairro, localidade, uf, complemento, logradouro } = result.data;
+
+  const address: AddressEnrollment = {
+    bairro,
+    cidade: localidade,
+    uf,
+    complemento,
+    logradouro,
   };
 
   // FIXME: não estamos interessados em todos os campos
