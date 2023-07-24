@@ -28,6 +28,26 @@ export async function postBookingService(roomId: number, userId: number) {
     throw forbiddenError();
   }
 
+  await RoomVacanciesChecker(roomId);
+
+  const result = await bookingRepository.postBookingRepository(roomId, userId);
+  return result;
+}
+
+export async function updateBookingService(roomId: number, userId: number, bookingId: number) {
+  const booking = await bookingRepository.getBookingRepository(userId);
+  if (!booking) {
+    throw notFoundError();
+  }
+
+  await RoomVacanciesChecker(roomId);
+
+  const result = await bookingRepository.updateBookingRepository(roomId, bookingId);
+
+  return result;
+}
+
+async function RoomVacanciesChecker(roomId: number) {
   const roomCheck = await prisma.room.findUnique({
     where: {
       id: roomId,
@@ -43,7 +63,4 @@ export async function postBookingService(roomId: number, userId: number) {
   if (roomVacancies >= roomCheck.capacity) {
     throw forbiddenError();
   }
-
-  const result = await bookingRepository.postBookingRepository(roomId, userId);
-  return result;
 }
