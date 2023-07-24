@@ -1,7 +1,7 @@
-import { getUserTicketsService } from '../tickets-service';
 import { prisma } from '@/config';
 import bookingRepository from '@/repositories/bookings-repository';
 import { forbiddenError, notFoundError } from '@/errors';
+import enrollmentRepository from '@/repositories/enrollment-repository';
 
 export async function getBookingService(userId: number) {
   const booking = await bookingRepository.getBookingRepository(userId);
@@ -18,15 +18,28 @@ export async function getBookingService(userId: number) {
 }
 
 export async function postBookingService(roomId: number, userId: number) {
-  const userTickets = await getUserTicketsService(userId);
-  if (
-    !userTickets ||
-    !userTickets.TicketType.isRemote ||
-    !userTickets.TicketType.includesHotel ||
-    userTickets.status !== 'PAID'
-  ) {
+  const enrollment = await enrollmentRepository.findWithAddressByUserId(userId);
+  if (!enrollment) {
+    console.log('batata1');
     throw forbiddenError();
   }
+
+  const ticket = await prisma.ticket.findFirst({
+    where: { enrollmentId: enrollment.id },
+    include: {
+      TicketType: true,
+    },
+  });
+
+  if (!ticket) {
+    throw notFoundError();
+  }
+  if (ticket.status !== 'PAID') throw forbiddenError();
+
+  const ticketType = await prisma.ticketType.findFirst({
+    where: { id: ticket.ticketTypeId },
+  });
+  if (ticketType.isRemote === true || ticketType.includesHotel === false) throw forbiddenError();
 
   await RoomVacanciesChecker(roomId);
 
@@ -44,11 +57,11 @@ export async function updateBookingService(roomId: number, userId: number, booki
 
   const result = await bookingRepository.updateBookingRepository(roomId, bookingId);
 
-  return result;
+  return { bookingId: result.id };
 }
 
 async function RoomVacanciesChecker(roomId: number) {
-  const roomCheck = await prisma.room.findUnique({
+  const roomCheck = await prisma.room.findFirst({
     where: {
       id: roomId,
     },
@@ -57,10 +70,10 @@ async function RoomVacanciesChecker(roomId: number) {
     throw notFoundError();
   }
 
-  const roomVacancies = await prisma.booking.count({
+  const roomVacancies = await prisma.booking.findMany({
     where: { roomId },
   });
-  if (roomVacancies >= roomCheck.capacity) {
+  if (roomVacancies.length > roomCheck.capacity) {
     throw forbiddenError();
   }
 }
